@@ -1,214 +1,149 @@
-#pragma once 
+#pragma once
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
+#include <stdexcept>
+#include <initializer_list>
+#include <type_traits>
 
-using namespace std;
-
-template<typename T>
-class Vector {
-    private:
-        T* _elt;
-        size_t _num_elts;
-        size_t _capacity;
-
-    public:
-        /* -------- MEMBER FUNCTIONS --------*/
-        Vector() : _elt(0), _num_elts(1), _capacity(0) { } // default ctor;
-
-        Vector(size_t s) : _elt(new T[s]), _num_elts(s), _capacity(s) { } // ctor
-
-        Vector(const Vector& original) : _elt(new T[original._capacity]), _num_elts(original._num_elts), _capacity(original._capacity) {
-            for (size_t i = 0; i < _num_elts; i++) { _elt[i] = original._elt[i]; }
-        } // copy ctor
-
-        Vector& operator=(const Vector& original) {
-            if (this != &original) {
-                delete[] _elt;
-                _elt = new T[original._capacity];
-                _num_elts = original._num_elts;
-                _capacity = original._capacity;
-                for (size_t i = 0; i < _num_elts; i++) { _elt[i] = original._elt[i]; }
-            }
-            return *this;
-        } // copy assignment
-
-        ~Vector() { delete[] _elt; } // dtor
+template <typename T>
+class vector {
+    static_assert(std::is_trivially_constructible_v<T>);
+    static_assert(std::is_trivially_destructible_v<T>);
+    T * buffer;
+    std::size_t buffCap;
+    std::size_t numElts;
 
 
-        /* -------- ITERATORS --------*/
-        class iterator;
+    public: 
 
-        iterator begin() { return iterator(_elt); } // begin()
+    //-----------------|| Constructors + Destructor ||-----------------//
 
-        iterator end() { return iterator(_elt + _num_elts); } // end()
+    vector() : buffer(nullptr), buffCap(0), numElts(0) { } // default constructor
 
+    vector(const vector & other) : buffer(nullptr), buffCap(0), numElts(0) { *this = other; } // copy constructor
+    
+    vector & operator=(const vector & other) {
+        if (this == &other) { return *this; }
+        clear();
+        reserve(other.buffCap);
+        for (std::size_t i = 0; i < other.numElts; i++) { buffer[i] = other.buffer[i]; }
+        numElts = other.numElts;
+        return *this;
+    } // copy assignment
 
-        /* -------- ELEMENT ACCESS --------*/
-        T at(size_t pos) {
-            if (pos >= _num_elts) { throw out_of_range("Index out of range"); }
-            return _elt[pos];
-        } // at()
-
-        T operator[](size_t pos) { return _elt[pos]; } // operator[]
-
-        T front() { return _elt[0]; } // front()
-
-        T back() { return _elt[_num_elts - 1]; } // front()
-
-
-        /* -------- CAPACITY --------*/        
-        bool empty() { return _num_elts == 0; } // empty()
-
-        size_t size() { return _num_elts; } // size()
-
-        void reserve(size_t new_cap) {
-            if (new_cap > _capacity) {
-                T* new_elt = new T[new_cap];
-                for (size_t i = 0; i < _num_elts; i++) { new_elt[i] = _elt[i]; }
-                delete[] _elt;
-                _elt = new_elt;
-                _capacity = new_cap;
-            }   
-        } // reserve()
-
-        size_t :capacity() { return _capacity; } // capacity()
-
-
-
-        /* -------- MODIFIERS --------*/
-        void clear() {
-            delete[] _elt;
-            _elt = 0;
-            _num_elts = 0;
-            _capacity = 0;
-        } // clear()
-
-        void insert(iterator pos, const T& val) {
-            if (_num_elts == _capacity) {
-                _capacity = _capacity == 0 ? 1 : _capacity * 2;
-                T* new_elt = new T[_capacity];
-                for (size_t i = 0; i < pos._ptr - _elt; i++) { new_elt[i] = _elt[i]; }
-                new_elt[pos._ptr - _elt] = val;
-                for (size_t i = pos._ptr - _elt + 1; i < _num_elts + 1; i++) { new_elt[i] = _elt[i - 1]; }
-                delete[] _elt;
-                _elt = new_elt;
-                _num_elts++;
-            } 
-            else {
-                for (size_t i = _num_elts; i > pos._ptr - _elt; i--) { _elt[i] = _elt[i - 1]; }
-                _elt[pos._ptr - _elt] = val;
-                _num_elts++;
-            }
-        } // insert()
-
-        void erase(iterator pos) {
-            for (size_t i = pos._ptr - _elt; i < _num_elts - 1; i++) { _elt[i] = _elt[i + 1]; }
-            _num_elts--;
-        } // erase()
-
-        void erase(iterator start, iterator end) {
-            for (size_t i = 0; i < end._ptr - start._ptr; i++) {
-                for (size_t j = start._ptr - _elt; j < _num_elts - 1; j++) { _elt[j] = _elt[j + 1]; }
-                _num_elts--;
-            }
-        } // erase()
-
-        void push_back(const T& val) {
-            if (_num_elts == _capacity) {
-                _capacity = _capacity == 0 ? 1 : _capacity * 2;
-                T* new_elt = new T[_capacity];
-                for (size_t i = 0; i < _num_elts; i++) { new_elt[i] = _elt[i]; }
-                new_elt[_num_elts] = val;
-                delete[] _elt;
-                _elt = new_elt;
-                _num_elts++;
-            } 
-            else {
-                _elt[_num_elts] = val;
-                _num_elts++;
-            }
-        } // push_back()
-
-        void pop_back() { _num_elts--; } // pop_back()
-
-        void resize(size_t count) {
-            if (count < _num_elts) {
-                _num_elts = count;
-            } 
-            else if (count > _num_elts) {
-                if (count > _capacity) {
-                    _capacity = count;
-                    T* new_elt = new T[_capacity];
-                    for (size_t i = 0; i < _num_elts; i++) { new_elt[i] = _elt[i]; }
-                    delete[] _elt;
-                    _elt = new_elt;
-                }
-                for (size_t i = _num_elts; i < count; i++) { _elt[i] = T(); }
-                _num_elts = count;
-            }
-        } // resize()
-
-        void swap(size_t pos1, size_t pos2) {
-            T temp = _elt[pos1];
-            _elt[pos1] = _elt[pos2];
-            _elt[pos2] = temp;
-        } // swap()
-
-
-        /* -------- USEFUL --------*/
-        bool operator==(const Vector& other) {
-            if (_num_elts != other._num_elts) { return false; }
-            for (size_t i = 0; i < _num_elts; i++) {
-                if (_elt[i] != other._elt[i]) { return false; }
-            }
-            return true;
-        } // operator==()
-
-        bool operator!=(const Vector& other) { return !(*this == other); } // operator!=()
-
-        void reverse(iterator start, iterator end) {
-            for (size_t i = 0; i < (end._ptr - start._ptr) / 2; i++) {
-                T temp = start._ptr[i];
-                start._ptr[i] = end._ptr[-i - 1];
-                end._ptr[-i - 1] = temp;
-            }
-        } // reverse()
-
-        void print() {
-            for (size_t i = 0; i < _num_elts; i++) { cout << _elt[i] << " "; }
-            cout << endl;
-        } // print()
-
-        void sort(iterator start, iterator end) {
-            for (size_t i = 0; i < end._ptr - start._ptr - 1; i++) {
-                for (size_t j = 0; j < end._ptr - start._ptr - i - 1; j++) {
-                    if (start._ptr[j] > start._ptr[j + 1]) {
-                        T temp = start._ptr[j];
-                        start._ptr[j] = start._ptr[j + 1];
-                        start._ptr[j + 1] = temp;
-                    }
-                }
-            }
-        } // sort()
-};
-
-template<class T> class iterator {
-    private:
-        T* _ptr;
-
-    public:
-        iterator(T* p) :_ptr(p) {}
-        iterator& operator++() {
-            _ptr++;
-            return *this;
+    constexpr vector(std::initializer_list<T> const args) : buffCap(1), numElts(0) {
+        buffer = reinterpret_cast<T *>(malloc(sizeof(T)));
+        for (auto & v : args) {
+            push(std::remove_cv_t<T>(v));
         }
-        iterator& operator--() {
-            _ptr--;
-            return *this;
+    } // initializer constructor
+
+    ~vector() { clear(); } // destructor
+
+
+    //-----------------|| Size Manipulation + Size Accessors ||-----------------//
+
+    void resize(std::size_t newSize) {
+        if (newSize > buffCap) { reserve(newSize); }
+        for (std::size_t i = numElts; i < newSize; i++) { buffer[i] = T(); }
+        numElts = newSize;
+    } // resize()
+
+    void reserve(std::size_t newCap) {
+        if (newCap <= buffCap) { return; }
+        T * newBuffer = static_cast<T*>(std::malloc(newCap * sizeof(T)));
+        if (newBuffer == nullptr) { throw std::bad_alloc(); }
+        for (std::size_t i = 0; i < numElts; i++) { newBuffer[i] = buffer[i]; }
+        std::free(buffer);
+        buffer = newBuffer;
+        buffCap = newCap;
+    } // reserve()
+
+    std::size_t size() const { return numElts; } // size()
+
+    std::size_t capacity() const { return buffCap; } // capacity()
+
+
+    //-----------------|| Data Accessors ||-----------------//
+
+    T & operator[](std::size_t idx) { return buffer[idx]; } // operator[]
+
+    T & at(std::size_t idx) {
+        if (idx >= numElts) { throw std::out_of_range("index out of range"); }
+        return buffer[idx];
+    } // at()
+
+    T * begin() { return buffer; } // begin()
+
+    T * end() { return buffer + numElts; } // end()
+
+
+    //-----------------|| Vector Manipulation ||-----------------//
+
+    void push_back(const T & val) {
+        if (numElts == buffCap) { reserve(buffCap == 0 ? 1 : buffCap * 2); }
+        buffer[numElts++] = val;
+    } // push_back()
+
+    void push(T * pos, const T & val) {
+        if (numElts == buffCap) { reserve(buffCap == 0 ? 1 : buffCap * 2); }
+        std::memmove(pos + 1, pos, (numElts - (pos - buffer)) * sizeof(T));
+        *pos = val;
+        numElts++;
+    } // insert()
+
+    void pop_back() {
+        if (numElts == 0) { throw std::out_of_range("pop_back on empty vector"); }
+        numElts--; 
+    } // pop_back()
+
+    void pop(T * pos) {
+        if (pos < buffer || pos >= buffer + numElts) { throw std::out_of_range("erase out of range"); }
+        std::memmove(pos, pos + 1, (numElts - (pos - buffer) - 1) * sizeof(T));
+        numElts--;
+    } // erase()
+
+    void erase(T * start, T * end) {
+        if (start < buffer || start >= buffer + numElts || end < buffer || end > buffer + numElts || start > end) { throw std::out_of_range("erase out of range"); }
+        std::memmove(start, end, (numElts - (end - buffer)) * sizeof(T));
+        numElts -= end - start;
+    } // erase()
+
+    void clear() {
+        std::free(buffer);
+        buffer = nullptr;
+        buffCap = 0;
+        numElts = 0;
+    } // clear()
+
+    void swap(vector & other) {
+        std::swap(buffer, other.buffer);
+        std::swap(buffCap, other.buffCap);
+        std::swap(numElts, other.numElts);
+    } // swap()
+
+    void reverse(T * start, T * end) {
+        while (start < end) {
+            std::swap(*start, *end);
+            start++;
+            end--;
         }
-        T& operator*() { return *_ptr; }
-        iterator operator+(int n) { return iterator(_ptr + n); }
-        iterator operator-(int n) { return iterator(_ptr - n); }
-        bool operator==(const iterator& b) const { return *_ptr == *b._ptr; }
-        bool operator!=(const iterator& b) const { return *_ptr != *b._ptr; }
-        bool operator<(const iterator& b) const { return *_ptr < *b._ptr; }
-        bool operator>(const iterator& b) const { return *_ptr > *b._ptr; }
+    } // reverse()
+
+    
+    //-----------------|| Operators ||-----------------//
+
+    bool operator==(const vector & other) const {
+        if (numElts != other.numElts) { return false; }
+        for (std::size_t i = 0; i < numElts; i++) { if (buffer[i] != other.buffer[i]) { return false; } }
+        return true;
+    } // operator==
+
+    bool operator!=(const vector & other) const { return !(*this == other); } // operator!=
+
+    bool operator+=(const T & val) { push_back(val); } // operator+=
+
+    bool operator-=(const T & val) { pop_back(val); } // operator-=
+
 };
