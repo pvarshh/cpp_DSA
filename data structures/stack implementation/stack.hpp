@@ -13,8 +13,8 @@ struct Node {
 }; 
 
 template <typename T>
-class queue {
-    Node<T>* _front;
+class stack {
+    Node<T>* _top;
     std::size_t _size;
     
     public:
@@ -22,68 +22,63 @@ class queue {
 
     //-----------------|| Constructors + Destructor ||-----------------//
 
-    queue() : _front(nullptr), _size(0) { } // default constructor
+    stack() : _top(nullptr), _size(0) { } // default constructor
 
-    queue(const queue & other) : _front(nullptr), _size(0) { *this = other; } // copy constructor
+    stack(const stack & other) : _top(nullptr), _size(0) { *this = other; } // copy constructor
 
-    queue & operator=(const queue & other) {
+    stack & operator=(const stack & other) {
         if (this == &other) { return *this; }
         clear();
-        for (Node* curr = other._front; curr != nullptr; curr = curr->next) {
+        for (Node* curr = other._top; curr != nullptr; curr = curr->next) {
             push(curr->value);
         }
         return *this;
     } // copy assignment
 
-    queue(std::initializer_list<T> const args) : _front(nullptr), _size(0) {
+    stack(std::initializer_list<T> const args) : _top(nullptr), _size(0) {
         for (auto & v : args) {
             push(std::remove_cv_t<T>(v));
         }
-    } // initializer constructor
+    } // initializer constructor    
 
-    
+
     //-----------------|| Size Manipulation + Size Accessors ||-----------------//
 
     std::size_t size() const { return _size; } // size()
 
     bool empty() const { return _size == 0; } // empty()
 
+    
+    //-----------------|| Data Accessprs ||-----------------//
 
-    //-----------------|| Data Accessors ||-----------------//
-
-    T front () const {
-        if (_front == nullptr) { throw std::out_of_range("queue::front(): queue is empty"); }
-        return _front->value;
-    } // front()
+    T top() const {
+        if (_top == nullptr) { throw std::out_of_range("stack::top(): stack is empty"); }
+        return _top->value;
+    } // top()
 
 
-    //-----------------|| queue Manipulator ||-----------------//
+    //-----------------|| Stack Manipulator ||-----------------//
 
     void push(T value) {
         Node<T>* new_node = new Node<T>;
         new_node->value = value;
-        new_node->next = nullptr;
-        if (_front == nullptr) { _front = new_node; } 
-        else {
-            Node<T>* curr = _front;
-            while (curr->next != nullptr) { curr = curr->next; }
-            curr->next = new_node;
-        }
+        new_node->next = _top;
+        _top = new_node;
         _size++;
     } // push()
 
     void pop() {
-        if (_front == nullptr) { throw std::out_of_range("queue::pop(): queue is empty"); }
-        Node<T>* temp = _front;
-        _front = _front->next;
+        if (_top == nullptr) { throw std::out_of_range("stack::pop(): stack is empty"); }
+        Node<T>* temp = _top;
+        _top = _top->next;
         delete temp;
         _size--;
     } // pop()
 
     void clear() {
-        while (_front != nullptr) {
-            Node<T>* temp = _front;
-            _front = _front->next;
+        while (_top != nullptr) {
+            Node<T>* temp = _top;
+            _top = _top->next;
             delete temp;
         }
         _size = 0;
@@ -94,12 +89,12 @@ class queue {
 
     bool operator==(const queue & other) const {
         if (_size != other._size) { return false; }
-        Node<T>* curr = _front;
-        Node<T>* other_curr = other._front;
-        while (curr != nullptr) {
-            if (curr->value != other_curr->value) { return false; }
-            curr = curr->next;
-            other_curr = other_curr->next;
+        Node<T>* curr1 = _top;
+        Node<T>* curr2 = other._top;
+        while (curr1 != nullptr) {
+            if (curr1->value != curr2->value) { return false; }
+            curr1 = curr1->next;
+            curr2 = curr2->next;
         }
         return true;
     }
@@ -115,5 +110,4 @@ class queue {
         pop();
         return *this;
     }
- 
 };

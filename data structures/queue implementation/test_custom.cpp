@@ -16,7 +16,7 @@ void test_copy_constructor() {
 
     queue<int> q2 = q1;
     assert(q1.size() == q2.size());
-    assert(q1.top() == q2.top());
+    assert(q1.front() == q2.front());
 }
 
 void test_copy_assignment() {
@@ -28,13 +28,13 @@ void test_copy_assignment() {
     queue<int> q2;
     q2 = q1;
     assert(q1.size() == q2.size());
-    assert(q1.top() == q2.top());
+    assert(q1.front() == q2.front());
 }
 
 void test_initializer_constructor() {
     queue<int> q = {1, 2, 3};
     assert(q.size() == 3);
-    assert(q.top() == 1);
+    assert(q.front() == 1);
 }
 
 void test_size() {
@@ -52,18 +52,18 @@ void test_empty() {
     assert(!q.empty());
 }
 
-void test_top() {
+void test_front() {
     queue<int> q;
     q.push(1);
     q.push(2);
-    assert(q.top() == 1);
+    assert(q.front() == 1);
 }
 
 void test_push() {
     queue<int> q;
     q.push(1);
     assert(q.size() == 1);
-    assert(q.top() == 1);
+    assert(q.front() == 1);
 }
 
 void test_pop() {
@@ -72,7 +72,7 @@ void test_pop() {
     q.push(2);
     q.pop();
     assert(q.size() == 1);
-    assert(q.top() == 2);
+    assert(q.front() == 2);
 }
 
 void test_clear() {
@@ -91,7 +91,7 @@ int main() {
     test_initializer_constructor();
     test_size();
     test_empty();
-    test_top();
+    test_front();
     test_push();
     test_pop();
     test_clear();
